@@ -109,7 +109,7 @@ class DependentEntityType extends AbstractType
     {
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
             $data = $event->getData();
-            if (!$data) {
+            if (!$data || is_array($data)) {
                 return;
             }
 
