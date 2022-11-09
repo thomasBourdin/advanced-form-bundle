@@ -9,6 +9,7 @@
             <argument type="service" id="sherlockode_afb.mapping_manager"/>
             <argument type="service" id="doctrine.orm.entity_manager"/>
             <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="form.factory"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>

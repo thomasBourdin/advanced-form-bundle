@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Kernel;
+use Symfony\Component\Form\FormFactoryInterface;
 
 class FileUploadController extends AbstractController
 {
@@ -38,6 +39,8 @@ class FileUploadController extends AbstractController
      */
     private $eventDispatcher;
 
+    private $formFactory;
+
     /**
      * @param UploadManager            $uploadManager
      * @param MappingManager           $mappingManager
@@ -48,12 +51,14 @@ class FileUploadController extends AbstractController
         UploadManager $uploadManager,
         MappingManager $mappingManager,
         EntityManagerInterface $em,
-        EventDispatcherInterface $eventDispatcher
+        EventDispatcherInterface $eventDispatcher,
+        FormFactoryInterface $formFactory
     ) {
         $this->uploadManager = $uploadManager;
         $this->mappingManager = $mappingManager;
         $this->em = $em;
         $this->eventDispatcher = $eventDispatcher;
+        $this->formFactory=$formFactory;
     }
 
     /**
@@ -64,7 +69,7 @@ class FileUploadController extends AbstractController
     public function uploadFileAction(Request $request)
     {
         $data = $request->get('afb_upload_file');
-        $form = $this->createForm(EntityMappingType::class, [], ['csrf_protection' => false]);
+        $form=$this->formFactory->create(EntityMappingType::class, [], ['csrf_protection' => false]);
         $form->submit(['mapping' => $data['mapping'], 'entity' => $data['id']]);
 
         $mapping = $form->getData()['mapping'];
@@ -80,11 +85,11 @@ class FileUploadController extends AbstractController
             return $event->getResponse();
         }
 
-        $form = $this->createForm(UploadFileType::class, $object, ['csrf_protection' => false, 'mapping' => $mapping]);
+        $form = $this->formFactory->create(UploadFileType::class, $object, ['csrf_protection' => false, 'mapping' => $mapping]);
         $form->submit([$mapping->fileProperty => $request->files->get('afb_upload_file')['file']]);
         if ($form->isSubmitted()) {
             if ($form->isValid()) {
-                $uploadedFile = $form->get('file')->getData();
+                $uploadedFile = $form->get('fileContainer')->getData()->getImageFile();
                 $fileContainer = $form->get('fileContainer')->getData();
                 try {
                     $this->em->flush();
@@ -125,7 +130,7 @@ class FileUploadController extends AbstractController
     public function removeFileAction(Request $request)
     {
         $data = $request->get('afb_remove_file');
-        $form = $this->createForm(EntityMappingType::class, [], ['csrf_protection' => false]);
+        $form = $this->formFactory->create(EntityMappingType::class, [], ['csrf_protection' => false]);
         $form->submit(['mapping' => $data['mapping'], 'fileEntity' => $data['id']]);
 
         $mapping = $form->getData()['mapping'];
